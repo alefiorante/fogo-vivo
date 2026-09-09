@@ -2,7 +2,8 @@
 
 A working prototype of an AI-powered ordering flow for a restaurant that runs three concepts under one roof — a wood-fired pizzeria, a burger counter, and a full-service kitchen — through a single QR code per table.
 
-**Live demo:** _add your GitHub Pages link here_
+**Live demo:** https://alefiorante.github.io/fogo-vivo/
+
 **Stack:** vanilla HTML/CSS/JS, Anthropic Messages API, no backend, no build step
 
 ---
