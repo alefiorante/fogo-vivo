@@ -127,10 +127,24 @@
     background: var(--white);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    padding: 20px;
+    overflow: hidden;
     display:flex;
     flex-direction: column;
     gap: 6px;
+  }
+  .item-card .thumb{
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    display: block;
+    background: var(--line);
+  }
+  .item-card .body{
+    padding: 16px 20px 20px;
+    display:flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
   }
   .item-card .top{ display:flex; justify-content: space-between; align-items:flex-start; gap: 10px;}
   .item-card h3{ font-size: 1.1rem; }
@@ -223,17 +237,46 @@
   .cart h3{ font-size: 1.05rem; margin-bottom: 14px; }
   .cart-empty{ color:#8a8071; font-size: 0.9rem; }
   .cart-line{
-    display:flex; justify-content:space-between; gap: 10px;
-    padding: 8px 0;
+    display:flex; justify-content:space-between; align-items:center; gap: 10px;
+    padding: 10px 0;
     border-bottom: 1px solid var(--line);
     font-size: 0.9rem;
   }
+  .cart-line .line-info{ display:flex; flex-direction:column; gap: 4px; flex: 1; min-width:0; }
+  .cart-line .line-info .item-name{ font-weight:500; }
+  .cart-line .qty-controls{ display:flex; align-items:center; gap: 6px; }
+  .cart-line .qty-controls button{
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    display:flex; align-items:center; justify-content:center;
+    padding: 0;
+  }
+  .cart-line .qty-controls button:hover{ border-color: var(--crust); color: var(--crust); }
+  .cart-line .line-right{ display:flex; align-items:center; gap: 10px; }
+  .cart-line .line-price{ white-space:nowrap; font-weight:500; }
+  .cart-line .remove-btn{
+    background:none; border:none; cursor:pointer;
+    color:#a89a86; font-size: 1rem; line-height: 1; padding: 2px;
+  }
+  .cart-line .remove-btn:hover{ color: var(--crust); }
   .cart-total{
     display:flex; justify-content:space-between;
     padding-top: 14px;
     font-weight: 600;
   }
   .cart .btn-primary{ width:100%; text-align:center; margin-top: 16px; }
+  .cart .btn-clear{
+    width:100%; text-align:center; margin-top: 8px;
+    background:none; border:1.5px solid var(--line); color:#8a8071;
+    border-radius:999px; padding: 8px; font-size:0.85rem; font-weight:600; cursor:pointer;
+  }
+  .cart .btn-clear:hover{ border-color:#a89a86; color:#635a4c; }
   .table-tag{
     display:inline-block;
     background: var(--cheese);
@@ -322,6 +365,190 @@
       </div>
       <div class="cart">
         <span class="table-tag">Mesa 07</span>
+        <h3>Seu pedido</h3>
+        <div id="cartBody"><p class="cart-empty">Ainda não há itens. Converse com o atendente ao lado para começar.</p></div>
+        <div class="cart-total" id="cartTotal" style="display:none;">
+          <span>Total</span><span id="cartTotalValue"></span>
+        </div>
+        <button class="btn btn-primary" style="display:none;" id="confirmBtn" onclick="confirmOrder()">Enviar pedido para a cozinha</button>
+        <button class="btn-clear" style="display:none;" id="clearBtn" onclick="clearCart()">Limpar carrinho</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>Fogo Vivo — protótipo de pedido via QR Code com atendente de IA</footer>
+
+<script>
+const MENU = [
+  {id:"pz1", cat:"Pizzaria", name:"Margherita", desc:"Molho de tomate, mussarela de búfala e manjericão fresco.", price:42, img:"https://loremflickr.com/400/300/margherita,pizza?lock=101"},
+  {id:"pz2", cat:"Pizzaria", name:"Calabresa", desc:"Calabresa fatiada, cebola roxa e azeitonas.", price:45, img:"https://loremflickr.com/400/300/pizza,pepperoni?lock=102"},
+  {id:"pz3", cat:"Pizzaria", name:"Portuguesa", desc:"Presunto, ovos, cebola, pimentão e ervilha.", price:48, img:"https://loremflickr.com/400/300/pizza,cheese?lock=103"},
+  {id:"pz4", cat:"Pizzaria", name:"Quatro Queijos", desc:"Mussarela, provolone, parmesão e gorgonzola.", price:50, img:"https://loremflickr.com/400/300/pizza,cheese?lock=104"},
+  {id:"ln1", cat:"Lanchonete", name:"Cheeseburger Artesanal", desc:"Blend de 160g, cheddar e molho da casa no pão brioche.", price:28, img:"https://loremflickr.com/400/300/cheeseburger?lock=105"},
+  {id:"ln2", cat:"Lanchonete", name:"Duplo Bacon", desc:"Dois blends, bacon crocante e queijo prato.", price:34, img:"https://loremflickr.com/400/300/burger,bacon?lock=106"},
+  {id:"ln3", cat:"Lanchonete", name:"Veggie", desc:"Hambúrguer de grão-de-bico, rúcula e maionese de ervas.", price:26, img:"https://loremflickr.com/400/300/veggieburger?lock=107"},
+  {id:"cz1", cat:"Cozinha", name:"Filé ao Molho Madeira", desc:"Filé mignon grelhado, molho madeira e arroz soltinho.", price:52, img:"https://loremflickr.com/400/300/steak,dinner?lock=108"},
+  {id:"cz2", cat:"Cozinha", name:"Frango Grelhado com Legumes", desc:"Peito de frango grelhado com legumes salteados.", price:38, img:"https://loremflickr.com/400/300/grilledchicken?lock=109"},
+  {id:"cz3", cat:"Cozinha", name:"Risoto de Funghi", desc:"Risoto cremoso com mix de cogumelos frescos.", price:46, img:"https://loremflickr.com/400/300/risotto,mushroom?lock=110"}
+];
+
+const CATS = ["Todos","Pizzaria","Lanchonete","Cozinha"];
+let activeCat = "Todos";
+let cart = []; // {id, name, qty, price}
+let history = [];
+
+function renderTabs(){
+  const el = document.getElementById('tabs');
+  el.innerHTML = CATS.map(c => `<button class="tab ${c===activeCat?'active':''}" onclick="setCat('${c}')">${c}</button>`).join('');
+}
+function setCat(c){ activeCat = c; renderTabs(); renderItems(); }
+function renderItems(){
+  const list = activeCat === "Todos" ? MENU : MENU.filter(i=>i.cat===activeCat);
+  document.getElementById('itemGrid').innerHTML = list.map(i => `
+    <div class="item-card">
+      <img class="thumb" src="${i.img}" alt="${i.name}" loading="lazy" onerror="this.style.display='none'">
+      <div class="body">
+        <div class="top"><h3>${i.name}</h3><span class="price">R$ ${i.price.toFixed(2)}</span></div>
+        <p>${i.desc}</p>
+        <button class="add" onclick="addToCart('${i.id}',1)">Adicionar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addToCart(id, qty){
+  const item = MENU.find(m=>m.id===id);
+  if(!item) return;
+  const existing = cart.find(c=>c.id===id);
+  if(existing){ existing.qty += qty; } else { cart.push({id, name:item.name, price:item.price, qty}); }
+  cart = cart.filter(c=>c.qty>0);
+  renderCart();
+}
+
+function setCartFromAgent(items){
+  // items: [{item, qty, price}] — casa pelo nome com o cardápio quando possível, para manter os controles +/-
+  cart = items.map(i => {
+    const match = MENU.find(m => m.name.toLowerCase() === String(i.item).toLowerCase());
+    return {
+      id: match ? match.id : i.item,
+      name: match ? match.name : i.item,
+      price: match ? match.price : (Number(i.price)||0),
+      qty: Number(i.qty)||1
+    };
+  });
+  renderCart();
+}
+
+function changeQty(id, delta){
+  const line = cart.find(c=>c.id===id);
+  if(!line) return;
+  line.qty += delta;
+  cart = cart.filter(c=>c.qty>0);
+  renderCart();
+}
+
+function removeFromCart(id){
+  cart = cart.filter(c=>c.id!==id);
+  renderCart();
+}
+
+function clearCart(){
+  cart = [];
+  renderCart();
+}
+
+function renderCart(){
+  const body = document.getElementById('cartBody');
+  const totalWrap = document.getElementById('cartTotal');
+  const confirmBtn = document.getElementById('confirmBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  if(cart.length === 0){
+    body.innerHTML = '<p class="cart-empty">Ainda não há itens. Converse com o atendente ao lado para começar.</p>';
+    totalWrap.style.display = 'none';
+    confirmBtn.style.display = 'none';
+    clearBtn.style.display = 'none';
+    return;
+  }
+  body.innerHTML = cart.map(c => `
+    <div class="cart-line">
+      <div class="line-info">
+        <span class="item-name">${c.name}</span>
+        <div class="qty-controls">
+          <button onclick="changeQty('${c.id}',-1)" aria-label="Diminuir">−</button>
+          <span>${c.qty}</span>
+          <button onclick="changeQty('${c.id}',1)" aria-label="Aumentar">+</button>
+        </div>
+      </div>
+      <div class="line-right">
+        <span class="line-price">R$ ${(c.price*c.qty).toFixed(2)}</span>
+        <button class="remove-btn" onclick="removeFromCart('${c.id}')" aria-label="Remover">✕</button>
+      </div>
+    </div>
+  `).join('');
+  const total = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  document.getElementById('cartTotalValue').textContent = 'R$ ' + total.toFixed(2);
+  totalWrap.style.display = 'flex';
+  confirmBtn.style.display = 'inline-block';
+  clearBtn.style.display = 'block';
+}
+
+function confirmOrder(){
+  addMessage('assistant', 'Pedido enviado para a cozinha! O tempo estimado de preparo é de 25 a 35 minutos. Posso ajudar com mais alguma coisa?');
+}
+
+function addMessage(role, text){
+  const el = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.textContent = text;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function buildSystemPrompt(){
+  const menuText = MENU.map(i => `- [${i.id}] ${i.name} (${i.cat}): ${i.desc} — R$ ${i.price.toFixed(2)}`).join('\n');
+  return `Você é o atendente virtual do restaurante Fogo Vivo, que reúne pizzaria, lanchonete e cozinha completa sob um único cardápio, atendido via QR Code na mesa. Fale em português do Brasil, em tom caloroso e direto, como um bom garçom.
+
+Cardápio disponível:
+${menuText}
+
+Regras:
+- Apresente o cardápio de forma resumida quando o cliente perguntar, sem listar tudo de uma vez a menos que peçam.
+- Ajude o cliente a montar o pedido, tirando dúvidas sobre os pratos.
+- Sempre que o carrinho mudar (item adicionado, removido ou quantidade alterada), termine sua resposta em uma linha própria com exatamente este formato, refletindo o carrinho COMPLETO e atualizado (não apenas o item novo):
+<!--CART:[{"item":"Nome do prato","qty":1,"price":42}]-->
+- Essa linha nunca deve ser mencionada ou explicada ao cliente; ela é removida automaticamente antes de exibir a mensagem.
+- Se o carrinho estiver vazio, não inclua a linha CART.
+- Nunca invente pratos fora do cardápio acima.`;
+}
+
+async function sendMessage(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  addMessage('user', text);
+  history.push({role:'user', content: text});
+
+  const pending = document.createElement('div');
+  pending.className = 'msg assistant pending';
+  pending.textContent = 'Digitando...';
+  document.getElementById('messages').appendChild(pending);
+
+  try{
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: buildSystemPrompt(),
+        messages: history
+      })
+    });
+    const data = await response.json();
+    let reply =n class="table-tag">Mesa 07</span>
         <h3>Seu pedido</h3>
         <div id="cartBody"><p class="cart-empty">Ainda não há itens. Converse com o atendente ao lado para começar.</p></div>
         <div class="cart-total" id="cartTotal" style="display:none;">
